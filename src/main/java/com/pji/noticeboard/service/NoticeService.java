@@ -1,6 +1,8 @@
 package com.pji.noticeboard.service;
 
 import com.pji.noticeboard.entity.Notice;
+import com.pji.noticeboard.exception.ErrorCode;
+import com.pji.noticeboard.exception.ServiceException;
 import com.pji.noticeboard.repository.NoticeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +27,11 @@ public class NoticeService {
     public Notice createNotice(Notice notice) {
         notice.setCreatedDate(LocalDateTime.now());
         notice.setViewCount(0);
-        Notice createdNotice = noticeRepository.save(notice);
-        return createdNotice;
+        try {
+            return noticeRepository.save(notice);
+        } catch (Exception e) {
+            throw new ServiceException("Failed to create notice", ErrorCode.NOTICE_CREATION_FAILED);
+        }
     }
 
     /**
@@ -44,8 +49,11 @@ public class NoticeService {
         notice.setStartDateTime(updatedNotice.getStartDateTime());
         notice.setEndDateTime(updatedNotice.getEndDateTime());
         notice.setAttachmentPaths(updatedNotice.getAttachmentPaths());
-        Notice savedNotice = noticeRepository.save(notice);
-        return savedNotice;
+        try {
+            return noticeRepository.save(notice);
+        } catch (Exception e) {
+            throw new ServiceException(String.format("Failed to update notice with ID %s", id), ErrorCode.NOTICE_UPDATE_FAILED);
+        }
     }
 
     /**
@@ -56,7 +64,11 @@ public class NoticeService {
     public void deleteNotice(Long id) {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Notice not found with id " + id));
-        noticeRepository.delete(notice);
+        try {
+            noticeRepository.delete(notice);
+        } catch (Exception e) {
+            throw new ServiceException(String.format("Failed to delete notice with ID %s", id), ErrorCode.NOTICE_DELETION_FAILED);
+        }
     }
 
     /**
