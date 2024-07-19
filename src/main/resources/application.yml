@@ -1,0 +1,14 @@
+spring:
+  profiles:
+    active: local
+
+logging:
+  level:
+    root: INFO
+    com.noticeboard: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
