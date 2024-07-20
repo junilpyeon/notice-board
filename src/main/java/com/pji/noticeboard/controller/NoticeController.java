@@ -1,5 +1,7 @@
 package com.pji.noticeboard.controller;
 
+import com.pji.noticeboard.dto.NoticeCreateDto;
+import com.pji.noticeboard.dto.NoticeUpdateDto;
 import com.pji.noticeboard.entity.Notice;
 import com.pji.noticeboard.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,18 +20,18 @@ import java.util.List;
 @Tag(name = "Notice Controller", description = "공지사항 관리 API")
 public class NoticeController {
 
-    private NoticeService noticeService;
+    private final NoticeService noticeService;
 
     /**
      * 새로운 공지사항을 등록합니다.
      *
-     * @param notice 등록할 공지사항 정보
+     * @param noticeCreateDto 등록할 공지사항 정보
      * @return 등록된 공지사항
      */
     @Operation(summary = "공지사항 등록", description = "새로운 공지사항을 등록합니다.")
     @PostMapping
-    public ResponseEntity<Notice> createNotice(@RequestBody Notice notice) {
-        Notice createdNotice = noticeService.createNotice(notice);
+    public ResponseEntity<Notice> createNotice(@RequestBody NoticeCreateDto noticeCreateDto) {
+        Notice createdNotice = noticeService.createNotice(noticeCreateDto);
         return ResponseEntity.ok(createdNotice);
     }
 
@@ -37,13 +39,13 @@ public class NoticeController {
      * 기존 공지사항을 수정합니다.
      *
      * @param id     수정할 공지사항 ID
-     * @param notice 수정할 공지사항 정보
+     * @param noticeUpdateDto 수정할 공지사항 정보
      * @return 수정된 공지사항
      */
     @Operation(summary = "공지사항 수정", description = "기존 공지사항을 수정합니다.")
     @PutMapping("/{id}")
-    public ResponseEntity<Notice> updateNotice(@PathVariable Long id, @RequestBody Notice notice) {
-        Notice updatedNotice = noticeService.updateNotice(id, notice);
+    public ResponseEntity<Notice> updateNotice(@PathVariable Long id, @RequestBody NoticeUpdateDto noticeUpdateDto) {
+        Notice updatedNotice = noticeService.updateNotice(id, noticeUpdateDto);
         return ResponseEntity.ok(updatedNotice);
     }
 
