@@ -22,6 +22,25 @@ cd noticeboard
 ./gradlew build
 ```
 
+## 파일 업로드 경로 설정
+
+Mac 환경에서 파일 업로드 경로를 설정하려면 `application-prod.yml`과 `application-local.yml`에 다음과 같은 설정을 추가합니다:
+
+```yaml
+file:
+  upload:
+    base-path: ${user.home}/uploads
+```
+
+윈도우 환경에서는 파일 경로를 다음과 같이 설정합니다:
+
+```yaml
+file:
+  upload:
+    base-path: C:/Users/${user.name}/uploads
+```
+
+
 ## 로컬 환경 (H2)
 
 ### 2. 애플리케이션 실행 (로컬 환경)
