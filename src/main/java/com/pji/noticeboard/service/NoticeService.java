@@ -9,6 +9,7 @@ import com.pji.noticeboard.exception.ErrorCode;
 import com.pji.noticeboard.exception.ServiceException;
 import com.pji.noticeboard.repository.NoticeRepository;
 import com.pji.noticeboard.util.FileExtension;
+import com.pji.noticeboard.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +47,7 @@ public class NoticeService {
      * @return 등록된 공지사항
      */
     public Notice createNotice(NoticeCreateDto noticeCreateDto) {
+        String currentUserName = SecurityUtil.getCurrentUserName();
         Notice createdNotice = Notice.builder()
                 .title(noticeCreateDto.getTitle())
                 .content(noticeCreateDto.getContent())
@@ -54,7 +56,7 @@ public class NoticeService {
                 .attachmentPaths(noticeCreateDto.getAttachmentPaths())
                 .createdDate(LocalDateTime.now())
                 .viewCount(0)
-                .author("작성자")
+                .author(currentUserName)
                 .build();
 
         try {
@@ -114,6 +116,9 @@ public class NoticeService {
     public NoticeDto getNotice(Long id) {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Notice not found with id " + id));
+
+        noticeRepository.incrementViewCount(id);
+
         return NoticeDto.builder()
                 .id(notice.getId())
                 .title(notice.getTitle())
@@ -122,7 +127,7 @@ public class NoticeService {
                 .endDateTime(notice.getEndDateTime())
                 .attachmentPaths(notice.getAttachmentPaths())
                 .createdDate(notice.getCreatedDate())
-                .viewCount(notice.getViewCount())
+                .viewCount(notice.getViewCount() + 1)
                 .author(notice.getAuthor())
                 .build();
     }
