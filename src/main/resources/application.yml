@@ -1,6 +1,8 @@
 spring:
   profiles:
     active: local
+  cache:
+    type: none
 
 logging:
   level:
@@ -12,3 +14,4 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+    try-it-out-enabled: true

@@ -1,6 +1,8 @@
 package com.pji.noticeboard.controller;
 
 import com.pji.noticeboard.dto.NoticeCreateDto;
+import com.pji.noticeboard.dto.NoticeDto;
+import com.pji.noticeboard.dto.NoticeResponseDto;
 import com.pji.noticeboard.dto.NoticeUpdateDto;
 import com.pji.noticeboard.entity.Notice;
 import com.pji.noticeboard.service.NoticeService;
@@ -9,6 +11,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -131,27 +136,43 @@ public class NoticeController {
     }
 
     /**
-     * 특정 공지사항을 조회합니다.
+     * 특정 공지사항을 상세조회합니다.
      *
      * @param id 조회할 공지사항 ID
      * @return 조회된 공지사항
      */
-    @Operation(summary = "공지사항 조회", description = "특정 공지사항을 조회합니다.")
+    @Operation(summary = "공지사항 상세조회", description = "특정 공지사항을 상세조회합니다.")
     @GetMapping("/{id}")
-    public ResponseEntity<Notice> getNotice(@PathVariable Long id) {
-        Notice notice = noticeService.getNotice(id);
+    public ResponseEntity<NoticeDto> getNotice(@PathVariable Long id) {
+        NoticeDto notice = noticeService.getNotice(id);
         return ResponseEntity.ok(notice);
     }
 
     /**
      * 모든 공지사항을 조회합니다.
      *
-     * @return 모든 공지사항 목록
+     * @return 페이징된 공지사항 목록
      */
-    @Operation(summary = "공지사항 목록 조회", description = "모든 공지사항을 조회합니다.")
+    @Operation(summary = "공지사항 목록 조회", description = "모든 공지사항을 페이징하여 조회합니다.")
     @GetMapping
-    public ResponseEntity<List<Notice>> getAllNotices() {
-        List<Notice> notices = noticeService.getAllNotices();
+    public ResponseEntity<Page<NoticeResponseDto>> getAllNotices(
+            @Parameter(description = "페이징 및 정렬 정보. 예시: ?page=0&size=10&sort=createdDate,desc")
+            @PageableDefault(size = 10) Pageable pageable) {
+        Page<NoticeResponseDto> notices = noticeService.getAllNotices(pageable);
         return ResponseEntity.ok(notices);
+    }
+
+    /**
+     * 조회수 상위 5개 공지사항을 조회합니다.
+     * 이 엔드포인트는 조회수가 가장 높은 5개의 공지사항을 반환합니다.
+     * 공지사항은 조회수 기준으로 내림차순 정렬되어 반환됩니다.
+     *
+     * @return 조회수 상위 5개 공지사항 목록
+     */
+    @Operation(summary = "조회수 상위 5개 공지사항 조회", description = "조회수가 가장 높은 5개의 공지사항을 조회합니다.")
+    @GetMapping("/top")
+    public ResponseEntity<List<NoticeResponseDto>> getTopNotices() {
+        List<NoticeResponseDto> topNotices = noticeService.getTopNotices();
+        return ResponseEntity.ok(topNotices);
     }
 }

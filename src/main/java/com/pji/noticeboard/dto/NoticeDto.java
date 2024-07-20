@@ -1,5 +1,6 @@
 package com.pji.noticeboard.dto;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,12 +9,16 @@ import java.util.List;
 
 @Getter
 @Setter
-public class NoticeDTO {
+@Builder
+public class NoticeDto {
 
+    private Long id;
     private String title;
     private String content;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private List<String> attachmentPaths;
+    private LocalDateTime createdDate;
+    private int viewCount;
     private String author;
     }
