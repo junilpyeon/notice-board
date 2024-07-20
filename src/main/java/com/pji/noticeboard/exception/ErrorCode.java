@@ -11,7 +11,8 @@ public enum ErrorCode {
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "Notice not found"),
     NOTICE_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create notice"),
     NOTICE_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update notice"),
-    NOTICE_DELETION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete notice");
+    NOTICE_DELETION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete notice"),
+    SAVE_FILE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save file");
 
     private final HttpStatus status;
     private final String message;

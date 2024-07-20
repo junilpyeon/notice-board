@@ -14,9 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -98,7 +101,12 @@ class NoticeServiceIntegrationTest {
                 .attachmentPaths(List.of())
                 .build();
 
-        Notice createdNotice = noticeService.createNotice(noticeCreateDto);
+        List<MultipartFile> files = List.of(
+                new MockMultipartFile("file1", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 1 Content".getBytes()),
+                new MockMultipartFile("file2", "file2.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 2 Content".getBytes())
+        );
+
+        Notice createdNotice = noticeService.createNotice(noticeCreateDto, files);
 
         assertNotNull(createdNotice);
         assertEquals("New Title", createdNotice.getTitle());
@@ -133,7 +141,12 @@ class NoticeServiceIntegrationTest {
                 .attachmentPaths(List.of())
                 .build();
 
-        Notice updatedNotice = noticeService.updateNotice(existingNotice.getId(), noticeUpdateDto);
+        List<MultipartFile> files = List.of(
+                new MockMultipartFile("file1", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 1 Content".getBytes()),
+                new MockMultipartFile("file2", "file2.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 2 Content".getBytes())
+        );
+
+        Notice updatedNotice = noticeService.updateNotice(existingNotice.getId(), noticeUpdateDto, files);
 
         assertNotNull(updatedNotice);
         assertEquals("Updated Title", updatedNotice.getTitle());
