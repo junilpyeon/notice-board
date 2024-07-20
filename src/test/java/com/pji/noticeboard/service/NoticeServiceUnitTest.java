@@ -15,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +24,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -101,6 +104,11 @@ class NoticeServiceUnitTest {
                 .attachmentPaths(List.of())
                 .build();
 
+        List<MultipartFile> files = List.of(
+                new MockMultipartFile("file1", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 1 Content".getBytes()),
+                new MockMultipartFile("file2", "file2.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 2 Content".getBytes())
+        );
+
         Notice notice = Notice.builder()
                 .title("New Title")
                 .content("New Content")
@@ -111,7 +119,7 @@ class NoticeServiceUnitTest {
 
         when(noticeRepository.save(any(Notice.class))).thenReturn(notice);
 
-        Notice createdNotice = noticeService.createNotice(noticeCreateDto);
+        Notice createdNotice = noticeService.createNotice(noticeCreateDto, files);
 
         assertNotNull(createdNotice);
         assertEquals("New Title", createdNotice.getTitle());
@@ -144,6 +152,11 @@ class NoticeServiceUnitTest {
                 .attachmentPaths(List.of())
                 .build();
 
+        List<MultipartFile> files = List.of(
+                new MockMultipartFile("file1", "file1.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 1 Content".getBytes()),
+                new MockMultipartFile("file2", "file2.txt", MediaType.TEXT_PLAIN_VALUE, "Test File 2 Content".getBytes())
+        );
+
         when(noticeRepository.findById(1L)).thenReturn(Optional.of(existingNotice));
         when(noticeRepository.save(any(Notice.class))).thenAnswer(invocation -> {
             Notice notice = invocation.getArgument(0);
@@ -151,7 +164,7 @@ class NoticeServiceUnitTest {
             return notice;
         });
 
-        Notice updatedNotice = noticeService.updateNotice(1L, noticeUpdateDto);
+        Notice updatedNotice = noticeService.updateNotice(1L, noticeUpdateDto, files);
 
         assertNotNull(updatedNotice);
         assertEquals("Updated Title", updatedNotice.getTitle());

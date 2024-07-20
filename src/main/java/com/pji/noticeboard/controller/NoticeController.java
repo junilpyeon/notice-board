@@ -5,9 +5,13 @@ import com.pji.noticeboard.dto.NoticeDto;
 import com.pji.noticeboard.dto.NoticeResponseDto;
 import com.pji.noticeboard.dto.NoticeUpdateDto;
 import com.pji.noticeboard.entity.Notice;
+import com.pji.noticeboard.exception.ErrorResponse;
 import com.pji.noticeboard.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -45,7 +48,12 @@ public class NoticeController {
      * @param files 첨부 파일 목록 (선택 사항)
      * @return 등록된 공지사항
      */
-    @Operation(summary = "공지사항 등록", description = "새로운 공지사항을 등록합니다.")
+    @Operation(summary = "공지사항 등록", description = "새로운 공지사항을 등록합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "공지사항이 성공적으로 등록됨", content = @Content(schema = @Schema(implementation = Notice.class))),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Notice> createNotice(
             @RequestParam("title") String title,
@@ -55,24 +63,14 @@ public class NoticeController {
             @Parameter(description = "End Date and Time", example = "2024-07-20T18:00:00")
             @RequestParam("endDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime,
             @RequestParam(value = "files", required = false) List<MultipartFile> files) {
-        List<String> attachmentPaths = files != null ? files.stream()
-                .map(file -> {
-                    try {
-                        return noticeService.saveFile(file);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to save file", e);
-                    }
-                }).collect(Collectors.toList()) : List.of();
-
         NoticeCreateDto noticeCreateDto = NoticeCreateDto.builder()
                 .title(title)
                 .content(content)
                 .startDateTime(startDateTime)
                 .endDateTime(endDateTime)
-                .attachmentPaths(attachmentPaths)
                 .build();
 
-        Notice createdNotice = noticeService.createNotice(noticeCreateDto);
+        Notice createdNotice = noticeService.createNotice(noticeCreateDto, files);
         return ResponseEntity.ok(createdNotice);
     }
 
@@ -89,7 +87,13 @@ public class NoticeController {
      * @param files 첨부 파일 목록 (선택 사항)
      * @return 수정된 공지사항
      */
-    @Operation(summary = "공지사항 수정", description = "기존 공지사항을 수정합니다.")
+    @Operation(summary = "공지사항 수정", description = "기존 공지사항을 수정합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "공지사항이 성공적으로 수정됨", content = @Content(schema = @Schema(implementation = Notice.class))),
+                    @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "공지사항을 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Notice> updateNotice(
             @PathVariable Long id,
@@ -100,25 +104,14 @@ public class NoticeController {
             @Parameter(description = "End Date and Time", example = "2024-07-20T18:00:00")
             @RequestParam("endDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDateTime,
             @RequestParam(value = "files", required = false) List<MultipartFile> files) {
-
-        List<String> attachmentPaths = files != null ? files.stream()
-                .map(file -> {
-                    try {
-                        return noticeService.saveFile(file);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to save file", e);
-                    }
-                }).collect(Collectors.toList()) : List.of();
-
         NoticeUpdateDto noticeUpdateDto = NoticeUpdateDto.builder()
                 .title(title)
                 .content(content)
                 .startDateTime(startDateTime)
                 .endDateTime(endDateTime)
-                .attachmentPaths(attachmentPaths)
                 .build();
 
-        Notice updatedNotice = noticeService.updateNotice(id, noticeUpdateDto);
+        Notice updatedNotice = noticeService.updateNotice(id, noticeUpdateDto, files);
         return ResponseEntity.ok(updatedNotice);
     }
 
@@ -128,7 +121,12 @@ public class NoticeController {
      * @param id 삭제할 공지사항 ID
      * @return 삭제 결과
      */
-    @Operation(summary = "공지사항 삭제", description = "공지사항을 삭제합니다.")
+    @Operation(summary = "공지사항 삭제", description = "공지사항을 삭제합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "공지사항이 성공적으로 삭제됨"),
+                    @ApiResponse(responseCode = "404", description = "공지사항을 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotice(@PathVariable Long id) {
         noticeService.deleteNotice(id);
@@ -141,7 +139,12 @@ public class NoticeController {
      * @param id 조회할 공지사항 ID
      * @return 조회된 공지사항
      */
-    @Operation(summary = "공지사항 상세조회", description = "특정 공지사항을 상세조회합니다.")
+    @Operation(summary = "공지사항 상세조회", description = "특정 공지사항을 상세조회합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "공지사항 상세 조회 성공", content = @Content(schema = @Schema(implementation = NoticeDto.class))),
+                    @ApiResponse(responseCode = "404", description = "공지사항을 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @GetMapping("/{id}")
     public ResponseEntity<NoticeDto> getNotice(@PathVariable Long id) {
         NoticeDto notice = noticeService.getNotice(id);
@@ -153,7 +156,11 @@ public class NoticeController {
      *
      * @return 페이징된 공지사항 목록
      */
-    @Operation(summary = "공지사항 목록 조회", description = "모든 공지사항을 페이징하여 조회합니다.")
+    @Operation(summary = "공지사항 목록 조회", description = "모든 공지사항을 페이징하여 조회합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "공지사항 목록 조회 성공", content = @Content(schema = @Schema(implementation = Page.class))),
+                    @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @GetMapping
     public ResponseEntity<Page<NoticeResponseDto>> getAllNotices(
             @Parameter(description = "페이징 및 정렬 정보. 예시: ?page=0&size=10&sort=createdDate,desc")
@@ -169,7 +176,11 @@ public class NoticeController {
      *
      * @return 조회수 상위 5개 공지사항 목록
      */
-    @Operation(summary = "조회수 상위 5개 공지사항 조회", description = "조회수가 가장 높은 5개의 공지사항을 조회합니다.")
+    @Operation(summary = "조회수 상위 5개 공지사항 조회", description = "조회수가 가장 높은 5개의 공지사항을 조회합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "조회수 상위 공지사항 목록 조회 성공", content = @Content(schema = @Schema(implementation = List.class))),
+                    @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            })
     @GetMapping("/top")
     public ResponseEntity<List<NoticeResponseDto>> getTopNotices() {
         List<NoticeResponseDto> topNotices = noticeService.getTopNotices();

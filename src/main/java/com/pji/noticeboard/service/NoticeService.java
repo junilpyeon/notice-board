@@ -46,14 +46,24 @@ public class NoticeService {
      * @param noticeCreateDto 등록할 공지사항 정보
      * @return 등록된 공지사항
      */
-    public Notice createNotice(NoticeCreateDto noticeCreateDto) {
+    public Notice createNotice(NoticeCreateDto noticeCreateDto, List<MultipartFile> files) {
+        List<String> attachmentPaths = files != null ? files.stream()
+                .map(file -> {
+                    try {
+                        return saveFile(file);
+                    } catch (Exception e) {
+                        log.error("Failed to saveFile with TITLE {}", noticeCreateDto.getTitle(), e);
+                        throw new ServiceException(String.format("Failed to saveFile with TITLE %s", noticeCreateDto.getTitle()), ErrorCode.SAVE_FILE_FAILED, e);
+                    }
+                }).collect(Collectors.toList()) : List.of();
+
         String currentUserName = SecurityUtil.getCurrentUserName();
         Notice createdNotice = Notice.builder()
                 .title(noticeCreateDto.getTitle())
                 .content(noticeCreateDto.getContent())
                 .startDateTime(noticeCreateDto.getStartDateTime())
                 .endDateTime(noticeCreateDto.getEndDateTime())
-                .attachmentPaths(noticeCreateDto.getAttachmentPaths())
+                .attachmentPaths(attachmentPaths)
                 .createdDate(LocalDateTime.now())
                 .viewCount(0)
                 .author(currentUserName)
@@ -62,6 +72,7 @@ public class NoticeService {
         try {
             return noticeRepository.save(createdNotice);
         } catch (Exception e) {
+            log.error("Failed to create notice", e);
             throw new ServiceException("Failed to create notice", ErrorCode.NOTICE_CREATION_FAILED, e);
         }
     }
@@ -73,22 +84,36 @@ public class NoticeService {
      * @param noticeUpdateDto 수정할 공지사항 정보
      * @return 수정된 공지사항
      */
-    public Notice updateNotice(Long id, NoticeUpdateDto noticeUpdateDto) {
+    public Notice updateNotice(Long id, NoticeUpdateDto noticeUpdateDto, List<MultipartFile> files) {
         Notice existingNotice = noticeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notice not found with id " + id));
+                .orElseThrow(() -> {
+                    log.error("Notice not found with id {}", id);
+                    return new ServiceException("Notice not found with id " + id, ErrorCode.NOTICE_NOT_FOUND);
+                });
+
+        List<String> attachmentPaths = files != null ? files.stream()
+                .map(file -> {
+                    try {
+                        return saveFile(file);
+                    } catch (Exception e) {
+                        log.error("Failed to saveFile with ID {}", id, e);
+                        throw new ServiceException(String.format("Failed to saveFile with ID %s", id), ErrorCode.SAVE_FILE_FAILED, e);
+                    }
+                }).collect(Collectors.toList()) : List.of();
 
         Notice updatedNotice = existingNotice.toBuilder()
                 .title(noticeUpdateDto.getTitle())
                 .content(noticeUpdateDto.getContent())
                 .startDateTime(noticeUpdateDto.getStartDateTime())
                 .endDateTime(noticeUpdateDto.getEndDateTime())
-                .attachmentPaths(noticeUpdateDto.getAttachmentPaths())
+                .attachmentPaths(attachmentPaths)
                 .build();
 
         try {
             return noticeRepository.save(updatedNotice);
         } catch (Exception e) {
-            throw new ServiceException(String.format("Failed to update notice with ID %s", id), ErrorCode.NOTICE_UPDATE_FAILED);
+            log.error("Failed to update notice with ID {}", id, e);
+            throw new ServiceException(String.format("Failed to update notice with ID %s", id), ErrorCode.NOTICE_UPDATE_FAILED, e);
         }
     }
 
@@ -99,11 +124,15 @@ public class NoticeService {
      */
     public void deleteNotice(Long id) {
         Notice notice = noticeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notice not found with id " + id));
+                .orElseThrow(() -> {
+                    log.error("Notice not found with id {}", id);
+                    return new ServiceException("Notice not found with id " + id, ErrorCode.NOTICE_NOT_FOUND);
+                });
         try {
             noticeRepository.delete(notice);
         } catch (Exception e) {
-            throw new ServiceException(String.format("Failed to delete notice with ID %s", id), ErrorCode.NOTICE_DELETION_FAILED);
+            log.error("Failed to delete notice with ID {}", id, e);
+            throw new ServiceException(String.format("Failed to delete notice with ID %s", id), ErrorCode.NOTICE_DELETION_FAILED, e);
         }
     }
 
@@ -115,7 +144,10 @@ public class NoticeService {
      */
     public NoticeDto getNotice(Long id) {
         Notice notice = noticeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Notice not found with id " + id));
+                .orElseThrow(() -> {
+                    log.error("Notice not found with id {}", id);
+                    return new ServiceException("Notice not found with id " + id, ErrorCode.NOTICE_NOT_FOUND);
+                });
 
         noticeRepository.incrementViewCount(id);
 
