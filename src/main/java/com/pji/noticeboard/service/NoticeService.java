@@ -6,12 +6,19 @@ import com.pji.noticeboard.entity.Notice;
 import com.pji.noticeboard.exception.ErrorCode;
 import com.pji.noticeboard.exception.ServiceException;
 import com.pji.noticeboard.repository.NoticeRepository;
+import com.pji.noticeboard.util.FileExtension;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Slf4j
@@ -19,6 +26,9 @@ import java.util.List;
 @Transactional
 @RequiredArgsConstructor
 public class NoticeService {
+
+    @Value("${file.upload.base-path}")
+    private String basePath;
 
     private final NoticeRepository noticeRepository;
 
@@ -43,7 +53,7 @@ public class NoticeService {
         try {
             return noticeRepository.save(createdNotice);
         } catch (Exception e) {
-            throw new ServiceException("Failed to create notice", ErrorCode.NOTICE_CREATION_FAILED);
+            throw new ServiceException("Failed to create notice", ErrorCode.NOTICE_CREATION_FAILED, e);
         }
     }
 
@@ -57,6 +67,7 @@ public class NoticeService {
     public Notice updateNotice(Long id, NoticeUpdateDto noticeUpdateDto) {
         Notice existingNotice = noticeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Notice not found with id " + id));
+
         Notice updatedNotice = existingNotice.toBuilder()
                 .title(noticeUpdateDto.getTitle())
                 .content(noticeUpdateDto.getContent())
@@ -64,6 +75,7 @@ public class NoticeService {
                 .endDateTime(noticeUpdateDto.getEndDateTime())
                 .attachmentPaths(noticeUpdateDto.getAttachmentPaths())
                 .build();
+
         try {
             return noticeRepository.save(updatedNotice);
         } catch (Exception e) {
@@ -106,6 +118,58 @@ public class NoticeService {
     public List<Notice> getAllNotices() {
         List<Notice> notices = noticeRepository.findAll();
         return notices;
+    }
+
+    /**
+     * 파일을 저장합니다.
+     * 파일의 확장자를 검증하고, 지정된 경로에 파일을 저장한 후 저장된 파일의 경로를 반환합니다.
+     *
+     * @param file 저장할 파일
+     * @return 저장된 파일의 경로
+     */
+    public String saveFile(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File must not be empty");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !isValidExtension(originalFilename)) {
+            throw new IllegalArgumentException("Invalid file type");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMddHH");
+        String dateFolder = now.format(dateFormatter);
+        File uploadDir = new File(basePath, dateFolder);
+
+        if (!uploadDir.exists()) {
+            if (!uploadDir.mkdirs()) {
+                throw new IOException("Failed to create directory: " + uploadDir.getAbsolutePath());
+            }
+        }
+
+        String fileName = now.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + "_" + originalFilename;
+        File destinationFile = new File(uploadDir, fileName);
+
+        try {
+            file.transferTo(destinationFile);
+        } catch (IOException e) {
+            throw new IOException("Failed to save file", e);
+        }
+
+        return Paths.get(dateFolder, fileName).toString();
+    }
+
+    /**
+     * 파일의 확장자가 유효한지 확인합니다.
+     * 파일의 확장자를 추출하고, 허용된 확장자 목록과 비교하여 유효성을 검사합니다.
+     *
+     * @param filename 확장자를 확인할 파일 이름
+     * @return 확장자가 유효하면 true, 그렇지 않으면 false
+     */
+    private boolean isValidExtension(String filename) {
+        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+        return FileExtension.isValid(extension);
     }
 }
 

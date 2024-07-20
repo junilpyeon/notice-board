@@ -44,4 +44,8 @@ public class Notice {
         this.viewCount = viewCount;
         this.author = author;
     }
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
 }
