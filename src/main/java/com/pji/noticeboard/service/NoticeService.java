@@ -1,6 +1,8 @@
 package com.pji.noticeboard.service;
 
 import com.pji.noticeboard.dto.NoticeCreateDto;
+import com.pji.noticeboard.dto.NoticeDto;
+import com.pji.noticeboard.dto.NoticeResponseDto;
 import com.pji.noticeboard.dto.NoticeUpdateDto;
 import com.pji.noticeboard.entity.Notice;
 import com.pji.noticeboard.exception.ErrorCode;
@@ -10,6 +12,10 @@ import com.pji.noticeboard.util.FileExtension;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +26,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -99,15 +106,25 @@ public class NoticeService {
     }
 
     /**
-     * 특정 공지사항을 조회합니다.
+     * 특정 공지사항을 상세조회합니다.
      *
      * @param id 조회할 공지사항 ID
      * @return 조회된 공지사항
      */
-    public Notice getNotice(Long id) {
+    public NoticeDto getNotice(Long id) {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Notice not found with id " + id));
-        return notice;
+        return NoticeDto.builder()
+                .id(notice.getId())
+                .title(notice.getTitle())
+                .content(notice.getContent())
+                .startDateTime(notice.getStartDateTime())
+                .endDateTime(notice.getEndDateTime())
+                .attachmentPaths(notice.getAttachmentPaths())
+                .createdDate(notice.getCreatedDate())
+                .viewCount(notice.getViewCount())
+                .author(notice.getAuthor())
+                .build();
     }
 
     /**
@@ -115,9 +132,38 @@ public class NoticeService {
      *
      * @return 모든 공지사항 목록
      */
-    public List<Notice> getAllNotices() {
-        List<Notice> notices = noticeRepository.findAll();
-        return notices;
+    public Page<NoticeResponseDto> getAllNotices(Pageable pageable) {
+        return noticeRepository.findAll(pageable).map(notice ->
+                NoticeResponseDto.builder()
+                        .id(notice.getId())
+                        .title(notice.getTitle())
+                        .content(notice.getContent())
+                        .createdDate(notice.getCreatedDate())
+                        .viewCount(notice.getViewCount())
+                        .author(notice.getAuthor())
+                        .build()
+        );
+    }
+
+    /**
+     * 조회수 상위 5개의 공지사항을 조회합니다.
+     * 이 메서드는 캐시를 사용하여 성능을 최적화합니다.
+     *
+     * @return 조회수 상위 5개의 공지사항 목록
+     */
+    @Cacheable(value = "topNotices")
+    public List<NoticeResponseDto> getTopNotices() {
+        List<Notice> topNotices = noticeRepository.findTop5ByOrderByViewCountDesc(PageRequest.of(0, 5));
+        return topNotices.stream()
+                .map(notice -> NoticeResponseDto.builder()
+                        .id(notice.getId())
+                        .title(notice.getTitle())
+                        .content(notice.getContent())
+                        .createdDate(notice.getCreatedDate())
+                        .viewCount(notice.getViewCount())
+                        .author(notice.getAuthor())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**
