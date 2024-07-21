@@ -7,6 +7,7 @@ import com.pji.noticeboard.dto.NoticeResponseDto;
 import com.pji.noticeboard.dto.NoticeUpdateDto;
 import com.pji.noticeboard.entity.Notice;
 import com.pji.noticeboard.repository.NoticeRepository;
+import com.pji.noticeboard.util.FileUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,9 @@ class NoticeServiceUnitTest {
 
     @Mock
     private NoticeRepository noticeRepository;
+
+    @Mock
+    private FileUtil fileUtil;
 
     @InjectMocks
     private NoticeService noticeService;
@@ -118,6 +122,15 @@ class NoticeServiceUnitTest {
                 .build();
 
         when(noticeRepository.save(any(Notice.class))).thenReturn(notice);
+
+        doAnswer(invocation -> {
+            List<MultipartFile> providedFiles = invocation.getArgument(0);
+            String providedTitle = invocation.getArgument(1);
+
+            assertEquals(2, providedFiles.size());
+            assertEquals("New Title", providedTitle);
+            return null;
+        }).when(fileUtil).processFiles(files, noticeCreateDto.getTitle());
 
         Notice createdNotice = noticeService.createNotice(noticeCreateDto, files);
 

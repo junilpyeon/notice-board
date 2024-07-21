@@ -44,7 +44,8 @@ file:
 ## 로컬 환경 (H2)
 
 ### 2. 애플리케이션 실행 (로컬 환경)
-로컬 개발 및 테스트 환경에서는 H2 인메모리 데이터베이스를 사용합니다.
+로컬 개발 및 테스트 환경에서는 H2 인메모리 데이터베이스를 사용합니다.  
+JDK 17로 빌드되고 실행됩니다. Project Structure에서 Project, Modules에서 17을 설정합니다.
 
 ```bash
 ./gradlew bootRun --args='--spring.profiles.active=local'

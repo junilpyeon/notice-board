@@ -1,8 +1,11 @@
 package com.pji.noticeboard.service;
 
+import com.pji.noticeboard.dto.NoticeCreateDto;
 import com.pji.noticeboard.dto.NoticeUpdateDto;
+import com.pji.noticeboard.exception.ErrorCode;
 import com.pji.noticeboard.exception.ServiceException;
 import com.pji.noticeboard.repository.NoticeRepository;
+import com.pji.noticeboard.util.FileUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -16,6 +19,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 /**
@@ -32,6 +38,9 @@ class NoticeServiceConstraintsUnitTest {
     @Mock
     private NoticeRepository noticeRepository;
 
+    @Mock
+    private FileUtil fileUtil;
+
     @InjectMocks
     private NoticeService noticeService;
 
@@ -41,23 +50,45 @@ class NoticeServiceConstraintsUnitTest {
     }
 
     /**
-     * 빈 파일을 저장할 때 예외가 발생하는지 테스트합니다.
+     * 빈 파일을 처리할 때 예외가 발생하는지 테스트합니다.
      */
     @Test
-    void testSaveFileWithEmptyFile() {
+    void testProcessFilesWithEmptyFile() {
         MockMultipartFile emptyFile = new MockMultipartFile("file", "file.txt", "text/plain", new byte[0]);
 
-        assertThrows(IllegalArgumentException.class, () -> noticeService.saveFile(emptyFile));
+        doThrow(new ServiceException("Invalid file provided", ErrorCode.INVALID_FILE_PROVIDED))
+                .when(fileUtil).processFiles(anyList(), eq("Test Title"));
+
+        NoticeCreateDto noticeCreateDto = NoticeCreateDto.builder()
+                .title("Test Title")
+                .content("Test Content")
+                .startDateTime(LocalDateTime.now())
+                .endDateTime(LocalDateTime.now().plusDays(1))
+                .attachmentPaths(List.of())
+                .build();
+
+        assertThrows(ServiceException.class, () -> noticeService.createNotice(noticeCreateDto, List.of(emptyFile)));
     }
 
     /**
      * 유효하지 않은 확장자를 가진 파일을 저장할 때 예외가 발생하는지 테스트합니다.
      */
     @Test
-    void testSaveFileWithInvalidExtension() {
+    void testProcessFilesWithInvalidExtension() {
         MockMultipartFile invalidFile = new MockMultipartFile("file", "file.invalid", "text/plain", "content".getBytes());
 
-        assertThrows(IllegalArgumentException.class, () -> noticeService.saveFile(invalidFile));
+        doThrow(new ServiceException("Invalid file provided", ErrorCode.INVALID_FILE_PROVIDED))
+                .when(fileUtil).processFiles(anyList(), eq("Test Title"));
+
+        NoticeCreateDto noticeCreateDto = NoticeCreateDto.builder()
+                .title("Test Title")
+                .content("Test Content")
+                .startDateTime(LocalDateTime.now())
+                .endDateTime(LocalDateTime.now().plusDays(1))
+                .attachmentPaths(List.of())
+                .build();
+
+        assertThrows(ServiceException.class, () -> noticeService.createNotice(noticeCreateDto, List.of(invalidFile)));
     }
 
     /**
