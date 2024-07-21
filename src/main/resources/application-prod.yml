@@ -24,3 +24,4 @@ spring:
 file:
   upload:
     base-path: ${user.home}/uploads
+    max-files: 5

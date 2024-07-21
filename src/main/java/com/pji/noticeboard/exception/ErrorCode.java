@@ -13,7 +13,8 @@ public enum ErrorCode {
     NOTICE_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update notice"),
     NOTICE_DELETION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete notice"),
     SAVE_FILE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save file"),
-    INVALID_FILE_PROVIDED(HttpStatus.BAD_REQUEST, "Invalid file provided");
+    INVALID_FILE_PROVIDED(HttpStatus.BAD_REQUEST, "Invalid file provided"),
+    MAX_FILE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "Max file limit exceeded");
 
     private final HttpStatus status;
     private final String message;

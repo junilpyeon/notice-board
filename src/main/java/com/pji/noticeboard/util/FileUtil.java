@@ -1,9 +1,10 @@
 package com.pji.noticeboard.util;
 
+import com.pji.noticeboard.config.FileUploadProperties;
 import com.pji.noticeboard.exception.ErrorCode;
 import com.pji.noticeboard.exception.ServiceException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,10 +18,10 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class FileUtil {
 
-    @Value("${file.upload.base-path}")
-    private String basePath;
+    private final FileUploadProperties fileUploadProperties;
 
     /**
      * 파일 목록을 처리하고 파일 시스템에 저장합니다.
@@ -30,6 +31,10 @@ public class FileUtil {
      * @return 저장된 파일 경로의 목록
      */
     public List<String> processFiles(List<MultipartFile> files, String title) {
+        if (files != null && files.size() > fileUploadProperties.getMaxFiles()) {
+            throw new ServiceException("Maximum number of files exceeded", ErrorCode.MAX_FILE_LIMIT_EXCEEDED);
+        }
+
         return files.stream()
                 .map(file -> {
                     try {
@@ -64,7 +69,7 @@ public class FileUtil {
 
         LocalDateTime now = LocalDateTime.now();
         String dateFolder = now.format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
-        File uploadDir = new File(basePath, dateFolder);
+        File uploadDir = new File(fileUploadProperties.getBasePath(), dateFolder);
 
         if (!uploadDir.exists() && !uploadDir.mkdirs()) {
             throw new IOException("Failed to create directory: " + uploadDir.getAbsolutePath());
