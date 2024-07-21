@@ -64,7 +64,6 @@ class NoticeServiceConstraintsUnitTest {
                 .content("Test Content")
                 .startDateTime(LocalDateTime.now())
                 .endDateTime(LocalDateTime.now().plusDays(1))
-                .attachmentPaths(List.of())
                 .build();
 
         assertThrows(ServiceException.class, () -> noticeService.createNotice(noticeCreateDto, List.of(emptyFile)));
@@ -85,7 +84,6 @@ class NoticeServiceConstraintsUnitTest {
                 .content("Test Content")
                 .startDateTime(LocalDateTime.now())
                 .endDateTime(LocalDateTime.now().plusDays(1))
-                .attachmentPaths(List.of())
                 .build();
 
         assertThrows(ServiceException.class, () -> noticeService.createNotice(noticeCreateDto, List.of(invalidFile)));

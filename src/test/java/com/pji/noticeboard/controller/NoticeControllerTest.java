@@ -1,6 +1,8 @@
 package com.pji.noticeboard.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pji.noticeboard.dto.NoticeCreateDto;
+import com.pji.noticeboard.dto.NoticeUpdateDto;
 import com.pji.noticeboard.entity.Notice;
 import com.pji.noticeboard.repository.NoticeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +21,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -43,6 +46,9 @@ class NoticeControllerTest {
     @Autowired
     private NoticeRepository noticeRepository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         noticeRepository.deleteAll();
@@ -60,19 +66,21 @@ class NoticeControllerTest {
                 .content("Test Content")
                 .startDateTime(LocalDateTime.now())
                 .endDateTime(LocalDateTime.now().plusDays(1))
-                .attachmentPaths(List.of())
                 .build();
 
         MockMultipartFile file = new MockMultipartFile(
                 "files", "test.txt", MediaType.TEXT_PLAIN_VALUE, "Test content".getBytes()
         );
 
-        mockMvc.perform(multipart("/api/notices")
+        MockMultipartFile noticeCreateDtoPart = new MockMultipartFile(
+                "noticeCreateRequest", "",
+                "application/json",
+                objectMapper.writeValueAsBytes(noticeCreateDto)
+        );
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/notices")
                         .file(file)
-                        .param("title", noticeCreateDto.getTitle())
-                        .param("content", noticeCreateDto.getContent())
-                        .param("startDateTime", noticeCreateDto.getStartDateTime().toString())
-                        .param("endDateTime", noticeCreateDto.getEndDateTime().toString()))
+                        .file(noticeCreateDtoPart))
                 .andExpect(status().isOk());
     }
 
@@ -123,12 +131,22 @@ class NoticeControllerTest {
 
         MockMultipartFile file = new MockMultipartFile("files", "test.txt", MediaType.TEXT_PLAIN_VALUE, "Test content".getBytes());
 
+        NoticeUpdateDto noticeUpdateDto = NoticeUpdateDto.builder()
+                .title("Updated Title")
+                .content("Updated Content")
+                .startDateTime(LocalDateTime.now())
+                .endDateTime(LocalDateTime.now().plusDays(1))
+                .build();
+
+        MockMultipartFile noticeUpdateDtoPart = new MockMultipartFile(
+                "noticeUpdateRequest", "",
+                "application/json",
+                objectMapper.writeValueAsBytes(noticeUpdateDto)
+        );
+
         mockMvc.perform(MockMvcRequestBuilders.multipart("/api/notices/" + notice.getId())
                         .file(file)
-                        .param("title", "Updated Title")
-                        .param("content", "Updated Content")
-                        .param("startDateTime", LocalDateTime.now().toString())
-                        .param("endDateTime", LocalDateTime.now().plusDays(1).toString())
+                        .file(noticeUpdateDtoPart)
                         .with(request -> {
                             request.setMethod("PUT");
                             return request;
