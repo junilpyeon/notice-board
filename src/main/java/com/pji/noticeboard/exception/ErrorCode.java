@@ -12,7 +12,8 @@ public enum ErrorCode {
     NOTICE_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create notice"),
     NOTICE_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update notice"),
     NOTICE_DELETION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete notice"),
-    SAVE_FILE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save file");
+    SAVE_FILE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save file"),
+    INVALID_FILE_PROVIDED(HttpStatus.BAD_REQUEST, "Invalid file provided");
 
     private final HttpStatus status;
     private final String message;

@@ -9,6 +9,7 @@ import com.pji.noticeboard.exception.ErrorResponse;
 import com.pji.noticeboard.service.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -163,7 +164,8 @@ public class NoticeController {
             })
     @GetMapping
     public ResponseEntity<Page<NoticeResponseDto>> getAllNotices(
-            @Parameter(description = "페이징 및 정렬 정보. 예시: ?page=0&size=10&sort=createdDate,desc")
+            @Parameter(description = "페이징 및 정렬 정보. 예시: ?page=0&size=10&sort=createdDate,desc",
+                    example = "{\"page\":0,\"size\":10,\"sort\":[\"createdDate,desc\"]}")
             @PageableDefault(size = 10) Pageable pageable) {
         Page<NoticeResponseDto> notices = noticeService.getAllNotices(pageable);
         return ResponseEntity.ok(notices);
@@ -178,7 +180,7 @@ public class NoticeController {
      */
     @Operation(summary = "조회수 상위 5개 공지사항 조회", description = "조회수가 가장 높은 5개의 공지사항을 조회합니다.",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "조회수 상위 공지사항 목록 조회 성공", content = @Content(schema = @Schema(implementation = List.class))),
+                    @ApiResponse(responseCode = "200", description = "조회수 상위 공지사항 목록 조회 성공", content = @Content(array = @ArraySchema(schema = @Schema(implementation = NoticeResponseDto.class)))),
                     @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             })
     @GetMapping("/top")
