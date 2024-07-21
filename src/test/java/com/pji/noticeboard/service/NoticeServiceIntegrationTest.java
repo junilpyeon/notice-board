@@ -98,7 +98,6 @@ class NoticeServiceIntegrationTest {
                 .content("New Content")
                 .startDateTime(LocalDateTime.now())
                 .endDateTime(LocalDateTime.now().plusDays(1))
-                .attachmentPaths(List.of())
                 .build();
 
         List<MultipartFile> files = List.of(
@@ -138,7 +137,6 @@ class NoticeServiceIntegrationTest {
                 .content("Updated Content")
                 .startDateTime(LocalDateTime.now())
                 .endDateTime(LocalDateTime.now().plusDays(1))
-                .attachmentPaths(List.of())
                 .build();
 
         List<MultipartFile> files = List.of(
