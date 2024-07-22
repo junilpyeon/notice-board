@@ -202,4 +202,76 @@ class NoticeControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Notice 1"))
                 .andExpect(jsonPath("$[4].title").value("Notice 5"));
     }
+
+    /**
+     * 제목의 길이가 100자를 초과할 때 예외가 발생하는지 테스트합니다.
+     */
+    @Test
+    @WithMockUser(username = "testUser")
+    void testCreateNoticeWithLongTitle() throws Exception {
+        NoticeCreateDto noticeCreateDto = NoticeCreateDto.builder()
+                .title("a".repeat(101))  // 제목이 101자
+                .content("Test Content")
+                .startDateTime(LocalDateTime.now())
+                .endDateTime(LocalDateTime.now().plusDays(1))
+                .build();
+
+        MockMultipartFile noticeCreateDtoPart = new MockMultipartFile(
+                "noticeCreateRequest", "",
+                "application/json",
+                objectMapper.writeValueAsBytes(noticeCreateDto)
+        );
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/notices")
+                        .file(noticeCreateDtoPart))
+                .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * 내용의 길이가 1000자를 초과할 때 예외가 발생하는지 테스트합니다.
+     */
+    @Test
+    @WithMockUser(username = "testUser")
+    void testCreateNoticeWithLongContent() throws Exception {
+        NoticeCreateDto noticeCreateDto = NoticeCreateDto.builder()
+                .title("Test Title")
+                .content("a".repeat(1001))  // 내용이 1001자
+                .startDateTime(LocalDateTime.now())
+                .endDateTime(LocalDateTime.now().plusDays(1))
+                .build();
+
+        MockMultipartFile noticeCreateDtoPart = new MockMultipartFile(
+                "noticeCreateRequest", "",
+                "application/json",
+                objectMapper.writeValueAsBytes(noticeCreateDto)
+        );
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/notices")
+                        .file(noticeCreateDtoPart))
+                .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * 종료 날짜가 시작 날짜보다 이전일 때 예외가 발생하는지 테스트합니다.
+     */
+    @Test
+    @WithMockUser(username = "testUser")
+    void testCreateNoticeWithInvalidEndDate() throws Exception {
+        NoticeCreateDto noticeCreateDto = NoticeCreateDto.builder()
+                .title("Test Title")
+                .content("Test Content")
+                .startDateTime(LocalDateTime.now().plusDays(1))
+                .endDateTime(LocalDateTime.now())  // 종료 날짜가 시작 날짜보다 이전
+                .build();
+
+        MockMultipartFile noticeCreateDtoPart = new MockMultipartFile(
+                "noticeCreateRequest", "",
+                "application/json",
+                objectMapper.writeValueAsBytes(noticeCreateDto)
+        );
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/notices")
+                        .file(noticeCreateDtoPart))
+                .andExpect(status().isBadRequest());
+    }
 }

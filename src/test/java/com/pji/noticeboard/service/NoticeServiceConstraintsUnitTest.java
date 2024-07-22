@@ -13,10 +13,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -87,6 +90,28 @@ class NoticeServiceConstraintsUnitTest {
                 .build();
 
         assertThrows(ServiceException.class, () -> noticeService.createNotice(noticeCreateDto, List.of(invalidFile)));
+    }
+
+    /**
+     * 첨부파일이 5개 이상일 때 예외가 발생하는지 테스트합니다.
+     */
+    @Test
+    void testProcessFilesWithTooManyFiles() {
+        List<MultipartFile> files = IntStream.range(0, 6)
+                .mapToObj(i -> new MockMultipartFile("file" + i, "file" + i + ".txt", "text/plain", "content".getBytes()))
+                .collect(Collectors.toList());
+
+        NoticeCreateDto noticeCreateDto = NoticeCreateDto.builder()
+                .title("Test Title")
+                .content("Test Content")
+                .startDateTime(LocalDateTime.now())
+                .endDateTime(LocalDateTime.now().plusDays(1))
+                .build();
+
+        doThrow(new ServiceException("Maximum number of files exceeded", ErrorCode.MAX_FILE_LIMIT_EXCEEDED))
+                .when(fileUtil).processFiles(anyList(), eq("Test Title"));
+
+        assertThrows(ServiceException.class, () -> noticeService.createNotice(noticeCreateDto, files));
     }
 
     /**
