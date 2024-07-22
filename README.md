@@ -130,7 +130,8 @@ Swagger UI를 통해 API를 테스트하려면 Spring Security를 통해 로그�
 - **전략**: Ehcache를 사용하여 자주 조회되는 데이터에 대해 캐싱을 적용합니다.
 
 ### 6. 제약사항 처리
-- **문제**: 잘못된 파일 업로드로 인한 오류 발생 가능성.
-- **전략**: 파일 업로드 시 빈 파일이나 유효하지 않은 확장자를 가진 파일을 처리하는 로직을 추가하여 예외를 발생시킵니다.
-- **문제**: 존재하지 않는 공지사항에 대한 수정 및 삭제 요청 처리.
-- **전략**: 존재하지 않는 공지사항에 대한 요청 시 적절한 예외를 발생시키고 로그를 남깁니다.
+1. **잘못된 파일 업로드**: 파일 업로드 시 빈 파일이나 유효하지 않은 확장자를 가진 파일을 처리하는 로직을 추가하여 예외를 발생시킵니다. (NoticeServiceConstraintsUnitTest)
+2. **존재하지 않는 공지사항에 대한 수정 및 삭제**: "Notice not found" ServiceException을 발생시키고 로그를 남깁니다. (NoticeServiceConstraintsUnitTest)
+3. **첨부파일이 5개 이상일 때 예외처리**: "Maximum number of files exceeded" ServiceException을 발생시키고 로그를 남깁니다. (NoticeServiceConstraintsUnitTest)
+4. **제목 및 내용의 길이 제한**: 제목은 최대 100자, 내용은 최대 1000자까지 허용하며, 이를 초과할 경우 예외를 발생시킵니다. (NoticeControllerTest)
+5. **종료 날짜의 유효성 검사**: 종료 날짜가 시작 날짜보다 이전일 경우 예외를 발생시킵니다. (NoticeControllerTest)
