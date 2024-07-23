@@ -91,7 +91,7 @@ docker-compose up -d
 3. 데이터베이스 선택: `USE noticeboard;`
 4. 테이블 목록 확인: `SHOW TABLES;`
 5. 테이블 조회: `SELECT * FROM notice;`
-6. 첨부파일 경로 테이블 조회: `notice_attachment_paths`
+6. 첨부파일 경로 테이블 조회: `SELECT * FROM notice_attachment_paths`
 
 ### 5. Swagger UI (프로덕션 환경)
 API 문서를 Swagger UI를 통해 확인할 수 있습니다.  
@@ -135,3 +135,4 @@ Swagger UI를 통해 API를 테스트하려면 Spring Security를 통해 로그�
 3. **첨부파일이 5개 이상일 때 예외처리**: "Maximum number of files exceeded" ServiceException을 발생시키고 로그를 남깁니다. (NoticeServiceConstraintsUnitTest)
 4. **제목 및 내용의 길이 제한**: 제목은 최대 100자, 내용은 최대 1000자까지 허용하며, 이를 초과할 경우 예외를 발생시킵니다. (NoticeControllerTest)
 5. **종료 날짜의 유효성 검사**: 종료 날짜가 시작 날짜보다 이전일 경우 예외를 발생시킵니다. (NoticeControllerTest)
+6. **인덱스 쿼리 작성**: 조회수, 작성자별, 기간별 조회 성능 향상을 위한 index쿼리 추가 (schema.sql)
